@@ -1,4 +1,4 @@
-package com.achals.raft.Dao
+package com.achals.raft.dao
 
 import com.achals.raft.data.PersistentState
 

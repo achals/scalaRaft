@@ -1,10 +1,10 @@
 package com.achals.raft
 
+import com.achals.raft.dao.PersistentStateDao
+
 /**
  * Created by achalshah on 9/16/14.
  */
-class Node {
-  private val StateDao stateDao;
-
-
+abstract class Node {
+  val stateDao: PersistentStateDao
 }

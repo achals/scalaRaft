@@ -1,0 +1,1 @@
+An implementation of the Raft distributed consensus protocol in Scala.

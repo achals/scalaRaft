@@ -13,7 +13,8 @@ import scala.concurrent.duration.FiniteDuration
  * Created by achalshah on 9/19/14.
  */
 class AkkaGateway(clientNode: Node, electionTimeout: Seconds){
-  val system: ActorSystem = ActorSystem(clientNode.clientId.id)
+  println( clientNode.clientId.id )
+  val system = ActorSystem(clientNode.clientId.id)
 
   val actor: ActorRef = system.actorOf(Props[CommunicatingActor])
   actor ! clientNode

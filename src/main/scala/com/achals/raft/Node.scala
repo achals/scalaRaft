@@ -8,25 +8,26 @@ import com.achals.raft.rpc.{ElectionVoteResponse, ElectionVoteRequest}
 
 import org.joda.time.Seconds
 
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.LoggerFactory
 
-import scala.util.Random
+import scala.collection.mutable
 
 /**
  * Created by achalshah on 9/16/14.
  */
-class Node(val clientId: ClientId,
-           val stateDao: PersistentStateDao) {
+class Node(val stateDao: PersistentStateDao) {
 
   val LOG = LoggerFactory.getLogger( "Node" )
 
   val clientGateway = new AkkaGateway(this, Seconds.seconds(1));
+  val clientId = this.clientGateway.clientId
   clientGateway.scheduleNewTimer()
+
   var state: State = State.Follower
-  var servers: Set[ClientId] = Set()
+  val servers = mutable.HashSet[ClientId]()
 
   var commitIndex: Int = 0
-  var lastApplied: LogEntry = null
+  var lastApplied: LogEntry = LogEntry(null, 0)
 
   def contestForLeader() = {
     LOG.info("{} contesting for election.", this.clientId)
@@ -61,7 +62,7 @@ class Node(val clientId: ClientId,
     this.clientGateway.scheduleNewTimer()
   }
 
-  def requestVotesFromServer( server: ClientId ) = {
+  def requestVotesFromServer( server: ClientId  ) = {
     val latestState = this.stateDao.getLatestState()
     val request = ElectionVoteRequest( latestState.currentTerm,
                                        latestState.votedFor,

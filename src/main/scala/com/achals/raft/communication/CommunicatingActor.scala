@@ -3,6 +3,7 @@ package com.achals.raft.communication
 import akka.actor.Actor
 
 import com.achals.raft.Node
+import com.achals.raft.communication.Akka.Messages
 import com.achals.raft.data.ClientId
 import com.achals.raft.rpc.{ElectionVoteResponse, ElectionVoteRequest}
 
@@ -18,9 +19,19 @@ class CommunicatingActor extends Actor {
 
     case "TimeOut" => this.clientNode.contestForLeader()
 
-    case request: ElectionVoteRequest => this.clientNode.respondToVoteRequest(ClientId(sender().path.name), request)
+    case Messages.AkkaElectionVoteRequest(clientId, request) => {
+      AkkaActorSystem.getClientForClientId(clientId) ! request
+    }
 
-    case response: ElectionVoteResponse => this.clientNode.respondToVoteResponse(ClientId(sender().path.name), response)
+    case request: ElectionVoteRequest => {
+      this.clientNode.servers.+=(ClientId(sender().path.toStringWithoutAddress))
+      this.clientNode.respondToVoteRequest(ClientId(sender().path.name), request)
+    }
+
+    case response: ElectionVoteResponse => {
+      this.clientNode.servers.+=(ClientId(sender().path.toStringWithoutAddress))
+      this.clientNode.respondToVoteResponse(ClientId(sender().path.name), response)
+    }
 
     case x => println(x)
   }

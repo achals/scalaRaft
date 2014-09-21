@@ -10,8 +10,9 @@ import com.achals.raft.data.{LogEntry, PersistentState, ClientId}
  */
 object App {
   def main (args: Array[String]) {
-    val node1 = new Node( ClientId("Rish"), this.initializeNewDao() )
-    val node2 = new Node( ClientId("Ach"),  this.initializeNewDao() )
+    val node1 = new Node( this.initializeNewDao() )
+    val node2 = new Node( this.initializeNewDao() )
+    node2.servers.+=(node1.clientId)
   }
 
   def initializeNewDao(): InMemoryStateDao = {

@@ -21,6 +21,7 @@ class Node(val clientId: ClientId,
   val LOG = LoggerFactory.getLogger( "Node" )
 
   val clientGateway = new AkkaGateway(this, Seconds.seconds(1));
+  clientGateway.scheduleNewTimer()
   var state: State = State.Follower
   var servers: Set[ClientId] = Set()
 

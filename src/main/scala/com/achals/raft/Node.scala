@@ -15,11 +15,11 @@ import scala.util.Random
 /**
  * Created by achalshah on 9/16/14.
  */
-class Node(stateDao: PersistentStateDao) {
+class Node(val clientId: ClientId,
+           val stateDao: PersistentStateDao) {
 
   val LOG = LoggerFactory.getLogger( "Node" )
 
-  val clientId: ClientId = ClientId( "Rish" )
   val clientGateway = new AkkaGateway(this, Seconds.seconds(1));
   var state: State = State.Follower
   var servers: Set[ClientId] = Set()

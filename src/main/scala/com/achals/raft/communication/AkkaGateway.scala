@@ -7,6 +7,7 @@ import com.achals.raft.Node
 import com.achals.raft.data.ClientId
 import com.achals.raft.rpc.{ElectionVoteResponse, ElectionVoteRequest, AppendEntriesResponse, AppendEntriesRequest}
 import org.joda.time.Seconds
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
@@ -16,12 +17,16 @@ import scala.concurrent.duration.FiniteDuration
  */
 class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
 
+  val LOG = LoggerFactory.getLogger(this.getClass)
+
   val system = ActorSystem(clientNode.clientId.id)
   val actor: ActorRef = system.actorOf(Props[CommunicatingActor])
+  LOG.info("Path for actor is {}.", this.actor)
   actor ! clientNode
 
   var cancellable:Option[Cancellable] = Option.empty
 
+  var serverActors: Map[ClientId, ActorRef] = Map()
 
   def scheduleNewTimer() = {
     if (this.cancellable.isDefined) {
@@ -39,7 +44,11 @@ class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
 
   @Override
   def requestVote(clientId: ClientId, request: ElectionVoteRequest): ElectionVoteResponse = {
+    this.serverActors.get(clientId).get ! request
     null
   }
 
+  def respondToVoteResponse( sendingActor: ActorRef, response: ElectionVoteResponse ) = {
+    this.clientNode.respondToVoteResponse(null,response)
+  }
 }

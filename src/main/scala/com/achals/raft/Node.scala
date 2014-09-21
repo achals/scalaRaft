@@ -4,7 +4,7 @@ import com.achals.raft.State.State
 import com.achals.raft.communication.AkkaGateway
 import com.achals.raft.dao.PersistentStateDao
 import com.achals.raft.data.{LogEntry, PersistentState, ClientId}
-import com.achals.raft.rpc.ElectionVoteRequest
+import com.achals.raft.rpc.{ElectionVoteResponse, ElectionVoteRequest}
 
 import org.joda.time.Seconds
 
@@ -68,5 +68,13 @@ class Node(val clientId: ClientId,
                                        this.commitIndex,
                                        this.lastApplied.term )
     this.clientGateway.requestVote(server, request)
+  }
+
+  def respondToVoteRequest( clientId: ClientId, request: ElectionVoteRequest) = {
+    LOG.info("{} got request {} from {}.", this.clientId, request, clientId)
+  }
+
+  def respondToVoteResponse( clientId: ClientId, response: ElectionVoteResponse) = {
+    LOG.info("{} got response {} from {}.", this.clientId, response, clientId)
   }
 }

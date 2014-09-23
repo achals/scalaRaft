@@ -17,7 +17,8 @@ object App {
 
   def initializeNewDao(): InMemoryStateDao = {
     val dao = new InMemoryStateDao()
-    dao.updateState(PersistentState(0, null, List()))
+    val logEntry = LogEntry(null, 0)
+    dao.updateState(PersistentState(0, null, List(logEntry)))
     dao
   }
 }

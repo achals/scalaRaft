@@ -46,4 +46,8 @@ class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
   def respondToVoteResponse( sendingActor: ActorRef, response: ElectionVoteResponse ) = {
     this.clientNode.respondToVoteResponse(null,response)
   }
+
+  def vote( clientId: ClientId, voteResponse: ElectionVoteResponse ) = {
+    this.actor ! Messages.AkkaElectionVote(clientId, voteResponse)
+  }
 }

@@ -27,7 +27,11 @@ class Node(val stateDao: PersistentStateDao) {
   val servers = mutable.HashSet[ClientId]()
 
   var commitIndex: Int = 0
-  var lastApplied: LogEntry = LogEntry(null, 0)
+  var lastApplied: Int = 0
+
+
+  // Leader Election State
+  var serversWhoHaveVotedForMe = mutable.HashSet[ClientId]()
 
   def contestForLeader() = {
     LOG.info("{} contesting for election.", this.clientId)
@@ -41,7 +45,7 @@ class Node(val stateDao: PersistentStateDao) {
 
     this.voteForSelf()
     this.resetTimer()
-    servers.foreach(this.requestVotesFromServer)
+    this.servers.foreach(this.requestVotesFromServer)
   }
 
   // Leader operations.
@@ -58,6 +62,9 @@ class Node(val stateDao: PersistentStateDao) {
   def voteFor( clientId : ClientId, state: PersistentState ) = {
   }
 
+  def eraseLeaderElectionState() = {
+    this.serversWhoHaveVotedForMe = mutable.HashSet[ClientId]()
+  }
   def resetTimer() = {
     this.clientGateway.scheduleNewTimer()
   }
@@ -67,15 +74,33 @@ class Node(val stateDao: PersistentStateDao) {
     val request = ElectionVoteRequest( latestState.currentTerm,
                                        latestState.votedFor,
                                        this.commitIndex,
-                                       this.lastApplied.term )
+                                       latestState.log.last.term)
     this.clientGateway.requestVote(server, request)
   }
 
   def respondToVoteRequest( clientId: ClientId, request: ElectionVoteRequest) = {
     LOG.info("{} got request {} from {}.", this.clientId, request, clientId)
+
+    val currentTerm = this.stateDao.getLatestState().currentTerm
+    if ( currentTerm < request.term ) {
+      this.clientGateway.vote(clientId, ElectionVoteResponse(currentTerm, true))
+    } else {
+      this.clientGateway.vote(clientId, ElectionVoteResponse(currentTerm, false))
+    }
+
   }
 
   def respondToVoteResponse( clientId: ClientId, response: ElectionVoteResponse) = {
     LOG.info("{} got response {} from {}.", this.clientId, response, clientId)
+    if ( response.voteGranted )
+    {
+      this.serversWhoHaveVotedForMe += clientId
+      if ( this.serversWhoHaveVotedForMe.size > (this.servers.size/2) )
+      {
+        this.state = State.Leader
+        LOG.info("{} is now the leader.", this.clientId)
+        //TODO: HEARTBEAT
+      }
+    }
   }
 }

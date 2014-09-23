@@ -29,23 +29,45 @@ class Node(val stateDao: PersistentStateDao) {
   var commitIndex: Int = 0
   var lastApplied: Int = 0
 
+  //Follower state
+  var receivedRPC = false
 
   // Leader Election State
   var serversWhoHaveVotedForMe = mutable.HashSet[ClientId]()
 
   def contestForLeader() = {
-    LOG.info("{} contesting for election.", this.clientId)
+    if ( this.receivedRPC )
+    {
+      this.receivedRPC = false
+    }
+    else
+    {
+      LOG.info("{} contesting for election.", this.clientId)
 
-    this.state = State.Candidate
+      this.state = State.Candidate
+      val currentState = this.stateDao.getLatestState()
+      val newState = this.stateDao.updateState(PersistentState(currentState.currentTerm + 1,
+        this.clientId,
+        currentState.log))
+
+
+      this.voteForSelf()
+      this.resetTimer()
+      this.servers.foreach(this.requestVotesFromServer)
+    }
+  }
+
+  def updateRecievedRPC() = {
+    this.receivedRPC = true
+  }
+
+  def updateCurrentTerm(newTerm: Int) = {
     val currentState = this.stateDao.getLatestState()
-    val newState = this.stateDao.updateState(PersistentState(currentState.currentTerm + 1,
-                                                             this.clientId,
-                                                             currentState.log))
-
-
-    this.voteForSelf()
-    this.resetTimer()
-    this.servers.foreach(this.requestVotesFromServer)
+    if (currentState.currentTerm < newTerm)
+    {
+      this.stateDao.updateState(PersistentState(newTerm, currentState.votedFor, currentState.log ))
+      this.state = State.Follower
+    }
   }
 
   // Leader operations.
@@ -57,9 +79,6 @@ class Node(val stateDao: PersistentStateDao) {
 
   def voteForSelf() = {
     this.voteReceived(this.clientId)
-  }
-
-  def voteFor( clientId : ClientId, state: PersistentState ) = {
   }
 
   def eraseLeaderElectionState() = {
@@ -80,10 +99,11 @@ class Node(val stateDao: PersistentStateDao) {
 
   def respondToVoteRequest( clientId: ClientId, request: ElectionVoteRequest) = {
     LOG.info("{} got request {} from {}.", this.clientId, request, clientId)
-
+    this.updateCurrentTerm(request.term)
     val currentTerm = this.stateDao.getLatestState().currentTerm
     if ( currentTerm < request.term ) {
       this.clientGateway.vote(clientId, ElectionVoteResponse(currentTerm, true))
+      this.updateRecievedRPC()
     } else {
       this.clientGateway.vote(clientId, ElectionVoteResponse(currentTerm, false))
     }
@@ -92,6 +112,7 @@ class Node(val stateDao: PersistentStateDao) {
 
   def respondToVoteResponse( clientId: ClientId, response: ElectionVoteResponse) = {
     LOG.info("{} got response {} from {}.", this.clientId, response, clientId)
+    this.updateCurrentTerm(response.term)
     if ( response.voteGranted )
     {
       this.serversWhoHaveVotedForMe += clientId
@@ -101,6 +122,10 @@ class Node(val stateDao: PersistentStateDao) {
         LOG.info("{} is now the leader.", this.clientId)
         //TODO: HEARTBEAT
       }
+    }
+    else
+    {
+      this.state = State.Follower
     }
   }
 }

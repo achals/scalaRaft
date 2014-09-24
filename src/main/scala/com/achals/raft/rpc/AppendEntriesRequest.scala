@@ -1,14 +1,14 @@
 package com.achals.raft.rpc
 
-import com.achals.raft.data.{LogEntry, ClientId}
+import com.achals.raft.data.{ClientId, LogEntry}
 
 /**
  * Created by achalshah on 9/17/14.
  */
-case class AppendEntriesRequest(termOfLeader: Int,
-                                leaderId: ClientId,
-                                prevLogIndex: Int,
-                                prevLogTerm: Int,
-                                entries: List[LogEntry],
-                                leaderCommit: Int) {
+case class AppendEntriesRequest (termOfLeader: Int,
+                                 leaderId: ClientId,
+                                 prevLogIndex: Int,
+                                 prevLogTerm: Int,
+                                 entries: List[LogEntry],
+                                 leaderCommit: Int) {
 }

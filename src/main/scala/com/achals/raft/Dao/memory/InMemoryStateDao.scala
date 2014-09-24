@@ -6,16 +6,18 @@ import com.achals.raft.data.PersistentState
 /**
  * Created by achalshah on 9/20/14.
  */
-class InMemoryStateDao extends PersistentStateDao{
+class InMemoryStateDao extends PersistentStateDao {
 
-  var persistentState: PersistentState = null;
+    var persistentState: PersistentState = null;
 
-  @Override
-  def getLatestState(): PersistentState = {this.persistentState}
+    @Override
+    def updateState (newState: PersistentState): PersistentState = {
+        this.persistentState = newState
+        this.getLatestState ()
+    }
 
-  @Override
-  def updateState(newState: PersistentState): PersistentState = {
-    this.persistentState = newState
-    this.getLatestState()
-  }
+    @Override
+    def getLatestState (): PersistentState = {
+        this.persistentState
+    }
 }

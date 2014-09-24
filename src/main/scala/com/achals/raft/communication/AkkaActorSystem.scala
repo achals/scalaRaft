@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, Props, ActorSystem}
 import com.achals.raft.data.ClientId
-import org.joda.time.Seconds
 import org.slf4j.LoggerFactory
 
 
@@ -24,9 +23,9 @@ object AkkaActorSystem {
     system.actorOf(Props[CommunicatingActor])
   }
 
-  def scheduleNewTimer(actor: ActorRef, electionTimeout: Seconds) = {
-    Option(system.scheduler.schedule(new FiniteDuration(electionTimeout.getSeconds, TimeUnit.SECONDS),
-                                     new FiniteDuration(electionTimeout.getSeconds, TimeUnit.SECONDS),
+  def scheduleNewTimer(actor: ActorRef, electionTimeout: Int) = {
+    Option(system.scheduler.schedule(new FiniteDuration(electionTimeout, TimeUnit.MILLISECONDS),
+                                     new FiniteDuration(electionTimeout, TimeUnit.MILLISECONDS),
                                      actor, "TimeOut"))
   }
 

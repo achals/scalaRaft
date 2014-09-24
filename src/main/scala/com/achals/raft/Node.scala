@@ -19,7 +19,7 @@ class Node(val stateDao: PersistentStateDao) {
 
   val LOG = LoggerFactory.getLogger( "Node" )
 
-  val clientGateway = new AkkaGateway(this, Seconds.seconds(1));
+  val clientGateway = new AkkaGateway(this);
   val clientId = this.clientGateway.clientId
   clientGateway.scheduleNewTimer()
 
@@ -99,9 +99,11 @@ class Node(val stateDao: PersistentStateDao) {
 
   def respondToVoteRequest( clientId: ClientId, request: ElectionVoteRequest) = {
     LOG.info("{} got request {} from {}.", this.clientId, request, clientId)
-    this.updateCurrentTerm(request.term)
     val currentTerm = this.stateDao.getLatestState().currentTerm
+
+    LOG.debug("Current term is {}, term in vote is {}.", currentTerm, request.term)
     if ( currentTerm < request.term ) {
+      this.updateCurrentTerm(request.term)
       this.clientGateway.vote(clientId, ElectionVoteResponse(currentTerm, true))
       this.updateRecievedRPC()
     } else {

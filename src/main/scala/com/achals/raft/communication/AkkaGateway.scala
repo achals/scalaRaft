@@ -8,15 +8,18 @@ import com.achals.raft.rpc.{ElectionVoteResponse, ElectionVoteRequest, AppendEnt
 import org.joda.time.Seconds
 import org.slf4j.LoggerFactory
 
+import scala.util.Random
+
 /**
  * Created by achalshah on 9/19/14.
  */
-class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
+class AkkaGateway(clientNode: Node) extends Gateway{
 
   val LOG = LoggerFactory.getLogger(this.getClass)
 
   val actor: ActorRef = AkkaActorSystem.getClient()
   val clientId = ClientId(actor.path.toStringWithoutAddress)
+  val timeoutMillis = this.randomTimeout()
 
   LOG.info("Path for actor is {}.", this.actor)
   LOG.info("Cliend ID for the client is {}.", this.clientId)
@@ -29,7 +32,8 @@ class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
     if (this.cancellable.isDefined) {
       this.cancellable.get.cancel()
     }
-    this.cancellable = AkkaActorSystem.scheduleNewTimer(this.actor, this.electionTimeout)
+    LOG.info("{} scheduling timeout for {} millis.", this.clientId, this.timeoutMillis)
+    this.cancellable = AkkaActorSystem.scheduleNewTimer(this.actor, this.timeoutMillis)
   }
 
   @Override
@@ -49,5 +53,9 @@ class AkkaGateway(clientNode: Node, electionTimeout: Seconds) extends Gateway{
 
   def vote( clientId: ClientId, voteResponse: ElectionVoteResponse ) = {
     this.actor ! Messages.AkkaElectionVote(clientId, voteResponse)
+  }
+
+  def randomTimeout() = {
+    Random.nextInt(700) + 100
   }
 }

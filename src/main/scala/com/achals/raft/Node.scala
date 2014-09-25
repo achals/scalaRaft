@@ -3,7 +3,7 @@ package com.achals.raft
 import com.achals.raft.State.State
 import com.achals.raft.communication.AkkaGateway
 import com.achals.raft.dao.PersistentStateDao
-import com.achals.raft.data.{ClientId, PersistentState}
+import com.achals.raft.data.{LogEntry, Command, ClientId, PersistentState}
 import com.achals.raft.rpc.{AppendEntriesRequest, ElectionVoteRequest, ElectionVoteResponse}
 import org.slf4j.LoggerFactory
 
@@ -70,12 +70,24 @@ class Node (val stateDao: PersistentStateDao) {
     }
 
     // Leader operations.
-    def appendEntries () = {}
-
-    def put (key: String, value: String) = {}
+    def appendEntry ( command: Command ) = {
+        for( server <- this.servers )(this.sendEntryToClient(server, command))
+    }
 
     def sendHeartbeatToAllServers () = {
         this.servers.foreach (this.sendHeartbeat)
+    }
+
+    def sendEntryToClient(clientId: ClientId, command: Command) = {
+        val term = this.stateDao.getLatestState ().currentTerm
+        val request = AppendEntriesRequest (term,
+            this.clientId,
+            this.stateDao.getLatestState ().log.size,
+            this.stateDao.getLatestState ().log.last.term,
+            List (LogEntry(command, term)),
+            this.commitIndex)
+
+        this.clientGateway.appendEntries(clientId, request)
     }
 
     def sendHeartbeat (clientId: ClientId) = {

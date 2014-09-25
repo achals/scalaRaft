@@ -30,7 +30,7 @@ object AkkaActorSystem {
 
     def getClientForClientId (clientId: ClientId) = {
         val actorRef = system.actorSelection (clientId.id)
-        LOG.info ("Found {} reference for client {}.", actorRef, clientId, null)
+        LOG.debug ("Found {} reference for client {}.", actorRef, clientId, null)
         actorRef
     }
 

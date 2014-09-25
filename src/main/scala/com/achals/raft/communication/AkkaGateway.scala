@@ -12,7 +12,7 @@ import scala.util.Random
 /**
  * Created by achalshah on 9/19/14.
  */
-class AkkaGateway (clientNode: Node) extends Gateway {
+class AkkaGateway (clientNode: Node) {
 
     val LOG = LoggerFactory.getLogger (this.getClass)
 
@@ -21,7 +21,7 @@ class AkkaGateway (clientNode: Node) extends Gateway {
     val timeoutMillis = this.randomTimeout ()
 
     LOG.info ("Path for actor is {}.", this.actor)
-    LOG.info ("Cliend ID for the client is {}.", this.clientId)
+    LOG.info ("ClientID for the client is {}.", this.clientId)
 
     actor ! clientNode
 
@@ -31,7 +31,7 @@ class AkkaGateway (clientNode: Node) extends Gateway {
         if (this.cancellable.isDefined) {
             this.cancellable.get.cancel ()
         }
-        LOG.info ("{} scheduling timeout for {} millis.", this.clientId, this.timeoutMillis)
+        LOG.debug ("{} scheduling timeout for {} millis.", this.clientId, this.timeoutMillis)
         this.cancellable = AkkaActorSystem.scheduleNewTimer (this.actor, this.timeoutMillis, "TimeOut")
     }
 
@@ -39,20 +39,16 @@ class AkkaGateway (clientNode: Node) extends Gateway {
         if (this.cancellable.isDefined) {
             this.cancellable.get.cancel ()
         }
-        LOG.info ("{} scheduling timeout for {} millis.", this.clientId, this.timeoutMillis)
+        LOG.debug ("{} scheduling timeout for {} millis.", this.clientId, this.timeoutMillis)
         this.cancellable = AkkaActorSystem.scheduleNewTimer (this.actor, this.timeoutMillis, "HeartBeat")
     }
 
-    @Override
-    def appendEntries (clientId: ClientId, request: AppendEntriesRequest): AppendEntriesResponse = {
+    def appendEntries (clientId: ClientId, request: AppendEntriesRequest) = {
         this.actor ! Messages.AkkaAppendEntriesRequest (clientId, request)
-        null
     }
 
-    @Override
-    def requestVote (clientId: ClientId, request: ElectionVoteRequest): ElectionVoteResponse = {
+    def requestVote (clientId: ClientId, request: ElectionVoteRequest) = {
         this.actor ! Messages.AkkaElectionVoteRequest (clientId, request)
-        null
     }
 
     def respondToVoteResponse (sendingActor: ActorRef, response: ElectionVoteResponse) = {

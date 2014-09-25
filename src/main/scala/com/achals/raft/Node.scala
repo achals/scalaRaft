@@ -4,7 +4,7 @@ import com.achals.raft.State.State
 import com.achals.raft.communication.AkkaGateway
 import com.achals.raft.dao.PersistentStateDao
 import com.achals.raft.data.{LogEntry, Command, ClientId, PersistentState}
-import com.achals.raft.rpc.{AppendEntriesRequest, ElectionVoteRequest, ElectionVoteResponse}
+import com.achals.raft.rpc.{AppendEntriesResponse, AppendEntriesRequest, ElectionVoteRequest, ElectionVoteResponse}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
@@ -151,8 +151,18 @@ class Node (val stateDao: PersistentStateDao) {
         this.clientGateway.scheduleNewHeartbeatTimer ()
     }
 
-    def respondToAppendEntriesRequest (clientId: ClientId, request: AppendEntriesRequest) = {
+    def respondToAppendEntriesRequest (clientId: ClientId, request: AppendEntriesRequest): Unit = {
         LOG.info ("Got heart beat from {}.", clientId)
         this.resetElectionTimer ()
+
+        if ( request.entries.isEmpty )
+        {
+            return
+        }
+
+        val currentState = this.stateDao.getLatestState()
+        if ( request.termOfLeader < currentState.currentTerm ||  currentState.log(request.prevLogIndex).term != request.prevLogTerm) {
+            this.clientGateway.respondToAppendEntriesRequest (clientId, AppendEntriesResponse(currentState.currentTerm, false))
+        }
     }
 }

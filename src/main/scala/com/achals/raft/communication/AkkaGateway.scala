@@ -51,12 +51,16 @@ class AkkaGateway (clientNode: Node) {
         this.actor ! Messages.AkkaElectionVoteRequest (clientId, request)
     }
 
-    def respondToVoteResponse (sendingActor: ActorRef, response: ElectionVoteResponse) = {
+    def respondToVoteRequest (sendingActor: ActorRef, response: ElectionVoteResponse) = {
         this.clientNode.respondToVoteResponse (null, response)
     }
 
     def vote (clientId: ClientId, voteResponse: ElectionVoteResponse) = {
         this.actor ! Messages.AkkaElectionVote (clientId, voteResponse)
+    }
+
+    def respondToAppendEntriesRequest( clientId: ClientId, response: AppendEntriesResponse ) = {
+
     }
 
     def randomTimeout () = {

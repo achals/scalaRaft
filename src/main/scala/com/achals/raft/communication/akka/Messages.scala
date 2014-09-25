@@ -10,6 +10,8 @@ object Messages {
 
     case class AkkaAppendEntriesRequest (toClient: ClientId, request: AppendEntriesRequest)
 
+    case class AkkaAppendEntriesResponse( toClient: ClientId, response: AkkaAppendEntriesResponse )
+
     case class AkkaElectionVoteRequest (toClient: ClientId, request: ElectionVoteRequest)
 
     case class AkkaElectionVote (toClient: ClientId, response: ElectionVoteResponse)

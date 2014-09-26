@@ -152,7 +152,7 @@ class Node (val stateDao: PersistentStateDao) {
     }
 
     def respondToAppendEntriesRequest (clientId: ClientId, request: AppendEntriesRequest): Unit = {
-        LOG.info ("Got heart beat from {}.", clientId)
+        LOG.info ( "{} Got append entries from {}.", this.clientId, clientId, null )
         this.resetElectionTimer ()
 
         if ( request.entries.isEmpty )
@@ -164,5 +164,15 @@ class Node (val stateDao: PersistentStateDao) {
         if ( request.termOfLeader < currentState.currentTerm ||  currentState.log(request.prevLogIndex).term != request.prevLogTerm) {
             this.clientGateway.respondToAppendEntriesRequest (clientId, AppendEntriesResponse(currentState.currentTerm, false))
         }
+
+        val tuples = currentState.log.slice(request.prevLogIndex, currentState.log.size).zip(request.entries)
+
+        if ( tuples.forall( (tuple) => tuple._1.term == tuple._2.term ) ) {
+            // Delete from the point of disagreement.
+        }
+
+        // From point of disagreement, update.
+
+        // Update commitIndex.
     }
 }

@@ -167,12 +167,17 @@ class Node (val stateDao: PersistentStateDao) {
 
         val tuples = currentState.log.slice(request.prevLogIndex, currentState.log.size).zip(request.entries)
 
-        if ( tuples.forall( (tuple) => tuple._1.term == tuple._2.term ) ) {
-            // Delete from the point of disagreement.
-        }
+        val deletionPoint = tuples.find( (tuple) =>  tuple._1.term == tuple._2.term  )
 
-        // From point of disagreement, update.
+        var logEntriesToUpdate: List[LogEntry] = currentState.log
+
+        if ( deletionPoint.isDefined ) {
+            logEntriesToUpdate = logEntriesToUpdate.take(request.prevLogIndex + tuples.indexOf(deletionPoint.get))
+        }
+        logEntriesToUpdate = logEntriesToUpdate ++ request.entries
 
         // Update commitIndex.
+        this.stateDao.updateState(PersistentState(request.termOfLeader, request.leaderId, logEntriesToUpdate))
+        LOG.debug("Current state: {}", this.stateDao.getLatestState())
     }
 }

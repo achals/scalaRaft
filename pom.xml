@@ -48,13 +48,23 @@
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
-      <version>3.0</version>
+      <version>4.0-beta4</version>
+    </dependency>
+    <dependency>
+      <groupId>net.codingwell</groupId>
+      <artifactId>scala-guice_2.11</artifactId>
+      <version>4.0.0-beta4</version>
     </dependency>
     <dependency>
       <groupId>org.scalacheck</groupId>
       <artifactId>scalacheck_2.11</artifactId>
       <version>1.11.6</version>
-      </dependency>
+    </dependency>
+    <dependency>
+      <groupId>com.sleepycat</groupId>
+      <artifactId>je</artifactId>
+      <version>5.0.73</version>
+    </dependency>
   </dependencies>
 
   <build>
